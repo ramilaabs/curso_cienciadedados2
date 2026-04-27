@@ -1,0 +1,129 @@
+---
+title: "Trabalho Final - Disciplina Ciência de Dados 2"
+author: "Ramila Alencar"
+date: "2026-04-27"
+output: html_document
+---
+<style>
+body {
+  text-align: justify;
+}
+</style>
+
+```{r setup, include=FALSE}
+# Configurações globais dos blocos de código
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+# Carregamento de Bibliotecas
+library(dplyr)
+library(ggplot2)
+library(ggridges)
+library(geobr)
+library(sf)
+library(leaflet)
+library(viridis)
+library(ggpubr)
+library(here)
+```
+# Descrição dos dados  
+O conjunto de dados utilizado neste trabalho são indicadores obtido da Plataforma AdaptaBrasil mantida pelo Ministério de Ciência, Tecnologia e Inovações (MCTI). Nesta análise incluiu-se dois indicadores: o **Índice de Vulnerabilidade ao Estresse Hídrico** e o **Índice de Risco de Arboviroses (Dengue, Zika e Chikungunya)**. O indicador de vulnerabilidade é definido pela plataforma como *"Grau de suscetibilidade de um sistema socioecológico aos efeitos das mudanças climáticas, especificamente aquelas que afetam os recursos hídricos"*. Já o indicador de risco de arboviroses é definido como *"Risco de impacto das mudanças climáticas em sistemas socioecológicos, considerando as seguintes arboviroses: dengue, zika e chikungunya"*. Ambos os indicadores são compostos por um conjunto de demais variáveis, possui valores entre 0 e 1, são classificados em cinco categorias: Muito Baixo, Baixo, Médio, Alto e Muito alto. O conjunto de dados é composto por 5570 municípios brasileiros, e os indicadores estão disponíveis para o ano de 2020.  
+
+Esses indicadores são utilizados na minha tese de doutorado para uma análise da vulnerabilidade climática e sua relação com a dengue. Mais informações sobre os indicadores podem ser encontradas através do link: https://adaptabrasil.mcti.gov.br/sobre/lista-de-indicadores.  
+
+```{r load-data}
+# Carregamento dos dados e visualização da natureza dos dados
+load(here("Dados", "indicadores_vulclim.Rdata"))
+head(dados_completos)
+glimpse(dados_completos)
+```
+
+# 1. Distribuição Regional da Vulnerabilidade ao Estresse Hídrico
+Nesta etapa, utilizei de um gráfico avançado para visualizar a distribuição de densidade do Índice de Vulnerabilidade ao Estresse Hídrico por região e Unidade Federativa (UF).  
+O mapa foi elaborado utilizando as bibiliotecas: *ggplot2 e ggridges*.
+```{r grafico-densidade}
+g1 <- ggplot(dados_completos, aes (x = IND_VULC_ESTRE_HIDR, y = UF, fill = REGIAO)) +
+  geom_density_ridges(alpha = 0.7) +
+  facet_wrap(REGIAO ~ ., scales = "free_y", space = "free_y") +
+  labs(x = "Indicador de Vulnerabilidade Climática",
+       y = NULL) +
+  theme_minimal() +
+  theme(
+    strip.text.y = element_text(angle = 270, face = "bold"), 
+    panel.spacing = unit(0.1, "lines"),                     
+    legend.position = "none",                               
+    axis.text.y = element_text(size = 10)
+  )
+g1  
+```  
+
+A distribuição do indicador de vulnerabilidade climática relacionada à estiagem hídrica varia significativamente entre as regiões do Brasil.  
+A região Nordeste apresenta uma distribuição mais ampla e deslocada para valores mais altos, indicando uma maior vulnerabilidade ao estresse hídrico. Em contraste, as regiões Sul e Sudeste mostram distribuições mais concentradas em valores mais baixos, sugerindo menor vulnerabilidade. A região Centro-Oeste tem uma distribuição intermediária, com uma concentração moderada de valores. Essas diferenças regionais refletem as variações climáticas e socioeconômicas que influenciam a vulnerabilidade ao estresse hídrico em cada região do país.  
+
+Além da variação entre as regiões, é possível observar variações dentro de cada região, com UFs específicas apresentando distribuições distintas. Por exemplo, no Nordeste, UFs como Sergipe e Rio Grande do Norte apresentam distribuição mais deslocada para a direita, enquanto Bahia e Maranhão apresentam distribuição mais deslocada para esquerda. Essa variação por UF é mais evidente no Norte, em que temos UFs com a curva muito deslocada para a direita, como Roraima e Acre, e outras com a curva mais deslocada para a esquerda, como Amazonas e Tocantins.  
+
+# 2. Relação entre Vulnerabilidade ao Estresse Hídrico e Risco de Arboviroses
+Este gráfico apresenta a relação entre a Vulnerabilidade ao Estresse Hídrico (eixo X) e o Risco de Arboviroses (eixo Y) em 5.570 municípios brasileiros, estratificados por região. Utilizou-se o coeficiente de correlação de *Spearman* por se tratar de uma análise entre indicadores multidimensionais que não necessariamente apresentam distribuição normal ou relação estritamente linear, sendo este método mais robusto a outliers e mais adequado para este tipo de análise.
+Para esta análise utilizou do *pacote ggpubr* para calcular o coeficiente de correlação e exibir os resultados no gráfico.
+```{r grafico-correlacao}
+g2 <- ggscatter(dados_completos, x = "IND_VULC_ESTRE_HIDR", y = "IND_RISCO_ARB",
+          color = "REGIAO", palette = "Dark2",
+          shape = "REGIAO",
+          size = 1.5, alpha = 0.4,
+          add = "reg.line",                                  
+          add.params = list(color = "black", fill = "lightgray"),
+          conf.int = TRUE,                                  
+          cor.coef = TRUE,                                   
+          cor.method = "spearman",                           
+          cor.coeff.args = list(method = "spearman", label.x = 0.05,
+                                label.y= 0.9, label.sep = "\n", size = 3.5)) +
+  stat_stars(aes(color = REGIAO), alpha = 0.1) +             
+  labs(
+    title = "Análise de correlação entre Vulnerabilidade ao Estresse Hídrico e \n Risco de Arboviroses por municípios brasileiros",
+    y = "Indicador de Risco de Arboviroses",
+    x = "Indicador de Vulnerabilidade ao Estresse Hídrico",
+    color = "Região", shape = "Região"
+  ) +
+  theme_bw() +
+  facet_wrap(~REGIAO) +
+  theme (legend.position = "none")
+
+g2
+```  
+
+A análise de correlação entre o indicador de vulnerabilidade ao estresse hídrico e o indicador de risco de arboviroses revela uma correlação positiva nas regiões Centro-Oeste, Nordeste, Sudeste e Sul, apesar de ser uma correlação fraca, mas significativa. Isso sugere que, em geral, municípios com maior vulnerabilidade ao estresse hídrico tendem a apresentar um risco ligeiramente maior de arboviroses. A região Norte apresenta um coeficiente de correlação negativo (-0.035), mas sem significância e uma linha de tendência quase estável. Isso sugere que, na região o estresse hídrico não é o principal fator impulsionador do risco de arboviroses, possivelmente devido à influência predominante da alta pluviosidade e umidade local. Além disso, o fato de as linhas de regressão (linhas pretas) nas regiões com associação positiva serem ascendentes reforça a hipótese de associação positiva entre os dois índices.  
+
+# 3. Mapa de Vulnerabilidade ao Estresse Hídrico
+Nesta etapa foi elaborado um mapa interativo utilizando a *biblioteca leaflet* para visualizar a distribuição espacial do Índice de Vulnerabilidade ao Estresse Hídrico em municípios brasileiros.   
+O mapa apresenta os municípios coloridos de acordo com o valor do índice, utilizando uma paleta de cores *'magma'* do pacote *'viridis'* para melhor visualização. Além disso, cada município possui um pop-up que exibe o nome do município e o valor do índice de vulnerabilidade ao estresse hídrico.  
+```{r mapa-interativo}
+#carregar os dados geográficos dos municípios brasileiros
+municipios <- readRDS (here("Dados", "municipios.rds"))
+#Juntar os dados de vulnerabilidade climática com os dados geográficos
+dados_municipios <- municipios %>%
+  left_join(dados_completos, by = c("code_muni" = "CD_MUN"))
+# ajustar a projeçao para o Leaflet
+dados_municipios <- st_transform(dados_municipios, crs = 4326)
+
+# Criar o mapa interativo
+pal_viridis <- colorNumeric(
+  palette = viridis(n = 256, option = "magma", direction = -1), 
+  domain = dados_municipios$IND_VULC_ESTRE_HIDR, 
+  na.color = "transparent"
+)
+
+g3 <- leaflet(dados_municipios) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal_viridis(IND_VULC_ESTRE_HIDR),
+              fillOpacity = 0.85,
+              opacity = 1,
+              color = "white",
+              weight = 0.2,
+              popup = ~paste("Município:", NM_MUNICIPIO, "<br>",
+                             "Vulnerabilidade:", round(IND_VULC_ESTRE_HIDR, 3))) %>%
+  addLegend(pal = pal_viridis, values = ~IND_VULC_ESTRE_HIDR, title = "Vulnerabilidade Climática <br> ao Estresse Hídrico", position = "bottomright", opacity = 0.8)
+g3
+```  
+
+No mapa interativo observa-se que os municípios com maiores índices de vulnerabilidade concentram-se de forma predominante na Região Nordeste, e algumas porções de municípios com alta vulnerabilidade dispersos pela região Norte e Sul. Em contraste, as regiões Sudeste e Centro-Oeste apresentam, em sua maioria, tonalidades mais claras, indicando uma vulnerabilidade comparativamente menor. Essa distribuição espacial reflete as condições climáticas e socioeconômicas distintas entre as regiões do Brasil, com o Nordeste enfrentando desafios significativos relacionados à escassez de água e ao estresse hídrico. O mapa interativo permite uma visualização detalhada da vulnerabilidade ao estresse hídrico em cada município, facilitando a identificação de áreas prioritárias para intervenções e políticas públicas voltadas para a mitigação dos impactos das mudanças climáticas.
+
+
+

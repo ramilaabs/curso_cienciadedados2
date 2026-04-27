@@ -1,4 +1,4 @@
-# curso_cienciadedados2
+# Trabalho Avaliativo do Curso Ciencia de Dados
 Este proejto é referente ao Curso de Ciência de Dados aplicada à Epidemiologia II ministrado pelos professores Dr.Oswaldo Cruz e Dra.Laís Freitas.
 
 O obejtivo deste trabalho avaliativo era elaborar um gráfico avançado e um gráfico interativo utilizando algum banco de dados público, interpretá-los e disponizar no github utilizando comando do git integrados ao Rstudio, e inserir tais resultados na forma de relatórios em RMarkdown.
@@ -8,4 +8,4 @@ Mais informações sobre os indicadores podem ser encontradas através do link: 
 
 Utilizei ainda dados geográficos dos municípios brasileiro para elaboração do mapa interativo, obtidos com pacote geobr.
 
-A estrtura do projeto é divido em pastas que facilitam a localização de cada parte deste projeto.
+A estrtura do projeto é divido em pastas que facilitam a localização de cada etapa que compoẽ este projeto.
